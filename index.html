@@ -285,15 +285,33 @@
       if(known[idx] === undefined) known[idx] = s * KEY_POS[e[0]].center;
     });
     var ks = Object.keys(known).map(Number).sort(function(a,b){ return a-b; });
-    for(i = 0; i < 5; i++){
-      if(known[i] !== undefined){ u[i] = known[i]; continue; }
-      var lo = null, hi = null;
-      ks.forEach(function(k){ if(k < i) lo = k; if(k > i && hi === null) hi = k; });
-      if(lo !== null && hi !== null) u[i] = known[lo] + (known[hi] - known[lo]) * (i - lo) / (hi - lo);
-      else if(lo !== null) u[i] = known[lo] + WHITE_SPACING * (i - lo);
-      else u[i] = known[hi] - WHITE_SPACING * (hi - i);
+
+    // Are the fingers in their natural left-to-right order?
+    var ordered = ks.every(function(k, n){ return n === 0 || known[k] > known[ks[n-1]]; });
+
+    var hb = [];   // where each finger sits when relaxed (palm anchor)
+    if(ordered){
+      for(i = 0; i < 5; i++){
+        if(known[i] !== undefined){ u[i] = known[i]; continue; }
+        var lo = null, hi = null;
+        ks.forEach(function(k){ if(k < i) lo = k; if(k > i && hi === null) hi = k; });
+        if(lo !== null && hi !== null) u[i] = known[lo] + (known[hi] - known[lo]) * (i - lo) / (hi - lo);
+        else if(lo !== null) u[i] = known[lo] + WHITE_SPACING * (i - lo);
+        else u[i] = known[hi] - WHITE_SPACING * (hi - i);
+      }
+      hb = u;
+    } else {
+      // Crossed fingering: draw a normal, relaxed hand; fingers do not reach for their keys.
+      var c = 0;
+      ks.forEach(function(k){ c += known[k] - (k - 2) * WHITE_SPACING; });
+      c /= ks.length;
+      for(i = 0; i < 5; i++){
+        hb[i] = c + (i - 2) * WHITE_SPACING;
+        u[i] = hb[i];
+      }
     }
-    var b = u.map(function(x, j){ return [x + BASE_OFF[j][0], TIP_Y[j] + BASE_OFF[j][1]]; });
+
+    var b = hb.map(function(x, j){ return [x + BASE_OFF[j][0], TIP_Y[j] + BASE_OFF[j][1]]; });
     var palm = 'M' + (b[0][0]-20) + ' 166 L' + (b[3][0]+18) + ' 150 L' + (b[4][0]+36) + ' 218' +
       ' C' + (b[4][0]+28) + ' 262 ' + (b[4][0]+8) + ' 288 ' + (b[4][0]-14) + ' 304' +
       ' L' + (b[0][0]+46) + ' 304 C' + b[0][0] + ' 282 ' + (b[0][0]-26) + ' 220 ' + (b[0][0]-20) + ' 166 Z';
@@ -308,16 +326,19 @@
 
     seq.forEach(function(e){
       if(!e[0] || fingerEls[e[0]]) return;
-      var j = 5 - e[2], tx = s * KEY_POS[e[0]].center;
+      var j = 5 - e[2];
+      // Crossed hands light the finger where it rests on the hand; otherwise it sits on its key
+      var tx = ordered ? s * KEY_POS[e[0]].center : hb[j];
+      var from = ordered ? [tx + LIT_OFF[j][0], TIP_Y[j] + LIT_OFF[j][1]] : b[j];
       var fg = svgEl('g', { 'class':'finger' });
-      fg.appendChild(svgEl('line', { x1:tx + LIT_OFF[j][0], y1:TIP_Y[j] + LIT_OFF[j][1], x2:tx, y2:TIP_Y[j] }));
+      fg.appendChild(svgEl('line', { x1:from[0], y1:from[1], x2:tx, y2:TIP_Y[j] }));
       fg.appendChild(svgEl('circle', { cx:tx, cy:TIP_Y[j], r:FINGER_W / 2 }));
       g.appendChild(fg);
       fingerEls[e[0]] = fg;
     });
     svg.appendChild(g);
 
-    var t = svgEl('text', { 'class':'hand-tag', x:s * (u[0] + 100), y:262 });
+    var t = svgEl('text', { 'class':'hand-tag', x:s * (hb[0] + 100), y:262 });
     t.textContent = label;
     svg.appendChild(t);
   }
