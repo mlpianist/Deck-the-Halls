@@ -211,7 +211,7 @@
       { rh: A4x4, lh: [['F3',2,2]] },
       { rh: A4x4.concat([['G4',1.5,4]]), lh: [['F3',2,2],['G3',1.5,1]] },
       { rh: P7, lh: [['F3',2,2],['G3',4,1]] },
-      { rh: P7.concat([['C4',3,2]]), lh: [['F3',2,2],['G3',4,1],['C3',3,5]] }
+      { rh: P7.concat([['C4',3,2,'E4']]), lh: [['F3',2,2],['G3',4,1],['C3',3,5]] }
     ]}
   };
 
@@ -328,7 +328,8 @@
       if(!e[0] || fingerEls[e[0]]) return;
       var j = 5 - e[2];
       // Crossed hands light the finger where it rests on the hand; otherwise it sits on its key
-      var tx = ordered ? s * KEY_POS[e[0]].center : hb[j];
+      // Optional 4th value in a note, e.g. ['C4',3,2,'E4'], puts the highlight at that key's position instead
+      var tx = ordered ? s * KEY_POS[e[3] || e[0]].center : hb[j];
       var from = ordered ? [tx + LIT_OFF[j][0], TIP_Y[j] + LIT_OFF[j][1]] : b[j];
       var fg = svgEl('g', { 'class':'finger' });
       fg.appendChild(svgEl('line', { x1:from[0], y1:from[1], x2:tx, y2:TIP_Y[j] }));
