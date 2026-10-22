@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deck the Halls</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-top:#8FD8FF; --sky-bottom:#FFF3B8; --ink:#2B2250; --ink-soft:#4C4270;
+    --sun:#FFC93C; --sun-deep:#F5A623; --coral:#FF5A3C; --coral-deep:#D93F22;
+    --mint:#2FD68F; --mint-deep:#18A86A; --grape:#9B4DFF; --grape-deep:#7A2FDB;
+    --sea:#1EA7F2; --sea-deep:#0D7FC4; --left-light:#FF5A3C; --right-light:#9B4DFF;
+    --key-white:#FFFDF7; --key-edge:#E9C79B; --key-black:#3A2F66;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html, body{ height:100%; overflow:hidden; }
+  body{ font-family:'Nunito', sans-serif; background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%); background-attachment: fixed; color: var(--ink); }
+  #app{ width:100%; height:100%; display:flex; flex-direction:column; }
+  .screen{ display:none; flex:1; flex-direction:column; min-height:0; }
+  .screen.active{ display:flex; animation: rise .4s cubic-bezier(.2,.7,.3,1); }
+  @keyframes rise{ from{ opacity:0; transform: translateY(10px); } to{ opacity:1; transform:none; } }
+  h1{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:2.6rem; letter-spacing:-0.01em; color: var(--coral-deep); text-shadow: 0 3px 0 #fff; line-height:1.1; }
+
+  #screen-home{ padding: 28px 20px 40px; max-width: 640px; margin:0 auto; width:100%; align-items:center; overflow:auto; }
+  .home-header{ text-align:center; margin-bottom: 8px; }
+  .home-pic{ width:100%; max-width:520px; border-radius:28px; border:5px solid #fff; box-shadow: 0 8px 0 rgba(43,34,80,.18); overflow:hidden; margin: 14px 0 26px; background:#fff; flex-shrink:0; }
+  .home-pic svg{ display:block; width:100%; height:auto; }
+  .part-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; width:100%; max-width:520px; }
+  .part-btn{ font-family:'Baloo 2', sans-serif; font-weight:800; font-size:1.5rem; color:#fff; border:none; border-radius:24px; padding: 18px 10px; cursor:pointer; transition: transform .12s ease, box-shadow .12s ease; }
+  .part-btn:active{ transform: translateY(5px); }
+  .part-btn.last-odd{ grid-column: 1 / -1; }
+  .part-btn.c0{ background: var(--coral); box-shadow: 0 7px 0 var(--coral-deep); }
+  .part-btn.c1{ background: var(--sea);   box-shadow: 0 7px 0 var(--sea-deep); }
+  .part-btn.c2{ background: var(--mint);  box-shadow: 0 7px 0 var(--mint-deep); }
+  .part-btn.c3{ background: var(--grape); box-shadow: 0 7px 0 var(--grape-deep); }
+  .part-btn:hover{ filter: brightness(1.07); }
+  .part-btn.c0:active{ box-shadow: 0 2px 0 var(--coral-deep); }
+  .part-btn.c1:active{ box-shadow: 0 2px 0 var(--sea-deep); }
+  .part-btn.c2:active{ box-shadow: 0 2px 0 var(--mint-deep); }
+  .part-btn.c3:active{ box-shadow: 0 2px 0 var(--grape-deep); }
+
+  #screen-practice{ padding: 10px 14px 16px; max-width: 1200px; margin:0 auto; width:100%; min-height:0; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom: 4px; flex-shrink:0; }
+  .back-btn{ background:#fff; border:3px solid var(--sun); color: var(--coral-deep); font-family:'Baloo 2',sans-serif; font-weight:700; font-size:1rem; border-radius:999px; padding:6px 16px; cursor:pointer; }
+  .back-btn:hover{ background:#FFF6D6; }
+  .title-wrap{ text-align:center; flex:1; }
+  .title-wrap .part-title{ font-family:'Baloo 2',sans-serif; font-weight:800; font-size:1.7rem; color: var(--coral-deep); text-shadow:0 2px 0 #fff; line-height:1.1; }
+  .step-dots{ display:flex; gap:6px; justify-content:center; margin-top:4px; flex-wrap:wrap; }
+  .dot{ width:14px; height:14px; border-radius:50%; background:#fff; border:3px solid var(--sun-deep); }
+  .dot.done{ background: var(--mint); border-color: var(--mint-deep); }
+  .dot.now{ background: var(--sun); transform: scale(1.3); }
+  .topbar .spacer{ width:92px; }
+  .step-label{ text-align:center; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:1.3rem; color: var(--ink); margin: 2px 0 6px; flex-shrink:0; }
+  .play-row{ display:flex; justify-content:center; margin-bottom: 10px; flex-shrink:0; }
+  .play-btn{ font-family:'Baloo 2',sans-serif; font-weight:800; font-size:1.4rem; color:#fff; border:none; border-radius:999px; padding: 12px 34px; cursor:pointer; display:flex; align-items:center; gap:10px; background: var(--mint); box-shadow: 0 6px 0 var(--mint-deep); }
+  .play-btn:active{ transform: translateY(4px); box-shadow: 0 2px 0 var(--mint-deep); }
+  .play-btn.stop{ background: var(--coral); box-shadow: 0 6px 0 var(--coral-deep); }
+  .play-btn.stop:active{ box-shadow: 0 2px 0 var(--coral-deep); }
+  .play-btn[disabled]{ opacity:.7; cursor:wait; }
+  .play-btn .icon{ width:22px; height:22px; display:block; }
+
+  .stage-box{ background: rgba(255,255,255,.55); border:4px solid #fff; border-radius:26px; padding: 10px 8px 4px; box-shadow: 0 6px 0 rgba(43,34,80,.14); flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+  #stage-scale{ width:100%; flex: 1; min-height: 0; overflow:hidden; position:relative; }
+  #stage{ width:900px; position:absolute; left:50%; top:0; margin-left:-450px; transform-origin: top center; }
+
+  #keys{ position:relative; width:900px; height:200px; background: linear-gradient(180deg,#FFE9BE 0%,#FFD98F 100%); border-radius: 0 0 14px 14px; }
+  .pkey{ position:absolute; top:0; box-sizing:border-box; border-radius: 0 0 8px 8px; transition: background .06s ease, box-shadow .06s ease; }
+  .pkey.white{ width:58px; height:200px; background: linear-gradient(180deg, var(--key-white) 0%, #FBE9CF 100%); border:2px solid var(--key-edge); z-index:1; }
+  .pkey.black{ width:36px; height:122px; background: linear-gradient(180deg, #5C5182 0%, var(--key-black) 100%); border:2px solid #2E274A; z-index:2; }
+  .pkey.black.lit-L{ background: var(--left-light); }
+  .pkey.black.lit-R{ background: var(--right-light); }
+  .pkey.white.lit-L{ background: linear-gradient(180deg,#FF8A70 0%, var(--left-light) 100%); }
+  .pkey.white.lit-R{ background: linear-gradient(180deg,#C99AFF 0%, var(--right-light) 100%); }
+  .pkey.lit-L, .pkey.lit-R{ box-shadow: 0 0 18px 4px rgba(255,201,60,.9); }
+  .klabel{ position:absolute; bottom:8px; left:0; right:0; text-align:center; font-family:'Baloo 2',sans-serif; font-weight:800; font-size:1.05rem; color: var(--sun-deep); pointer-events:none; }
+
+  #hands{ display:block; width:900px; height:330px; margin-top:6px; overflow: visible; }
+  .hand-outline{ stroke:#2B2250; stroke-linecap:round; stroke-linejoin:round; }
+  .hand-skin{ stroke:#FFD9B3; stroke-linecap:round; stroke-linejoin:round; }
+  .finger{ opacity:0; color:#FF5A3C; }
+  .finger line{ stroke:currentColor; stroke-width:36; stroke-linecap:butt; }
+  .finger circle{ fill:currentColor; }
+  .finger.lit-L{ opacity:1; color:var(--left-light); }
+  .finger.lit-R{ opacity:1; color:var(--right-light); }
+  .hand-tag{ font-family:'Baloo 2',sans-serif; font-weight:800; font-size:20px; fill: var(--ink-soft); text-anchor:middle; }
+
+  .bottom-row{ display:flex; align-items:center; justify-content:center; gap:16px; margin-top:12px; flex-wrap:wrap; flex-shrink:0; }
+  .practice-text{ font-family:'Baloo 2',sans-serif; font-weight:700; font-size:1.25rem; color: var(--ink); background:#fff; border:3px solid var(--sun); border-radius:18px; padding:8px 16px; }
+  .next-btn{ font-family:'Baloo 2',sans-serif; font-weight:800; font-size:1.2rem; color:#fff; border:none; border-radius:999px; padding: 12px 28px; cursor:pointer; background: var(--grape); box-shadow: 0 6px 0 var(--grape-deep); }
+  .next-btn:hover{ filter:brightness(1.08); }
+  .next-btn:active{ transform: translateY(4px); box-shadow: 0 2px 0 var(--grape-deep); }
+  .next-btn.done{ background: var(--sun-deep); box-shadow: 0 6px 0 #C47F0E; color: var(--ink); }
+  .next-btn.done:active{ box-shadow: 0 2px 0 #C47F0E; }
+  .sound-note{ text-align:center; font-weight:700; font-size:.85rem; color: var(--ink-soft); margin-top:6px; min-height:1.2em; flex-shrink:0; }
+  @media (max-width:520px){ h1{ font-size:2rem; } .topbar .spacer{ display:none; } }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <section id="screen-home" class="screen active">
+    <div class="home-header"><h1>Deck the Halls</h1></div>
+
+    <div class="home-pic">
+      <svg viewBox="0 0 520 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cartoon fireplace decorated with a holly garland, stockings, candles and a Christmas tree">
+        <rect width="520" height="340" fill="#FFE2B8"/>
+        <rect y="285" width="520" height="55" fill="#B5703A"/>
+        <rect y="285" width="520" height="6" fill="#8B5A2B"/>
+        <!-- garland -->
+        <path d="M0 22 Q130 92 260 38 Q390 -12 520 52" fill="none" stroke="#18934D" stroke-width="22" stroke-linecap="round"/>
+        <path d="M0 22 Q130 92 260 38 Q390 -12 520 52" fill="none" stroke="#1FA85A" stroke-width="10" stroke-linecap="round" stroke-dasharray="14 10"/>
+        <g><circle cx="60" cy="50" r="9" fill="#FF5A3C"/><circle cx="130" cy="68" r="9" fill="#FFC93C"/><circle cx="205" cy="62" r="9" fill="#1EA7F2"/><circle cx="285" cy="30" r="9" fill="#9B4DFF"/><circle cx="360" cy="14" r="9" fill="#FF5A3C"/><circle cx="440" cy="26" r="9" fill="#FFC93C"/><circle cx="500" cy="50" r="9" fill="#1EA7F2"/></g>
+        <!-- wreath -->
+        <circle cx="260" cy="130" r="42" fill="none" stroke="#18934D" stroke-width="20"/>
+        <circle cx="260" cy="130" r="42" fill="none" stroke="#2FD68F" stroke-width="8" stroke-dasharray="10 9"/>
+        <circle cx="232" cy="108" r="6" fill="#D93F22"/><circle cx="244" cy="100" r="6" fill="#D93F22"/><circle cx="238" cy="115" r="6" fill="#D93F22"/>
+        <polygon points="260,166 236,196 260,186 284,196" fill="#FF5A3C"/><circle cx="260" cy="170" r="7" fill="#D93F22"/>
+        <!-- fireplace -->
+        <rect x="130" y="195" width="260" height="100" fill="#A64B2A"/>
+        <g stroke="#7E3519" stroke-width="3"><line x1="130" y1="220" x2="390" y2="220"/><line x1="130" y1="245" x2="390" y2="245"/><line x1="130" y1="270" x2="390" y2="270"/><line x1="195" y1="195" x2="195" y2="220"/><line x1="325" y1="195" x2="325" y2="220"/><line x1="160" y1="220" x2="160" y2="245"/><line x1="260" y1="220" x2="260" y2="245"/><line x1="360" y1="220" x2="360" y2="245"/></g>
+        <rect x="112" y="186" width="296" height="16" rx="5" fill="#8B5A2B"/>
+        <path d="M170 295 V235 Q170 215 200 215 H320 Q350 215 350 235 V295 Z" fill="#2B2250"/>
+        <path d="M215 295 Q200 262 228 248 Q226 270 244 262 Q250 236 268 232 Q268 258 286 264 Q304 260 302 295 Z" fill="#FF8A2B"/>
+        <path d="M235 295 Q232 276 250 268 Q256 282 266 276 Q282 282 275 295 Z" fill="#FFD84A"/>
+        <rect x="205" y="290" width="110" height="9" rx="4" fill="#6B4423"/>
+        <!-- candles -->
+        <rect x="138" y="150" width="16" height="36" fill="#fff"/><rect x="138" y="150" width="16" height="7" fill="#FF5A3C"/><path d="M146 128 Q138 142 146 148 Q154 142 146 128Z" fill="#FFC93C"/>
+        <rect x="366" y="150" width="16" height="36" fill="#fff"/><rect x="366" y="150" width="16" height="7" fill="#FF5A3C"/><path d="M374 128 Q366 142 374 148 Q382 142 374 128Z" fill="#FFC93C"/>
+        <!-- stockings -->
+        <path d="M168 190 h26 v26 q0 16 -16 16 h-10 q-12 0 -12 -12 v-8 z" fill="#FF5A3C" transform="translate(0,10)"/><rect x="164" y="196" width="34" height="12" rx="4" fill="#fff"/>
+        <path d="M326 190 h26 v26 q0 16 -16 16 h-10 q-12 0 -12 -12 v-8 z" fill="#1FA85A" transform="translate(0,10)"/><rect x="322" y="196" width="34" height="12" rx="4" fill="#fff"/>
+        <!-- tree -->
+        <rect x="446" y="262" width="16" height="24" fill="#8B5A2B"/>
+        <polygon points="454,170 418,222 490,222" fill="#1FA85A"/><polygon points="454,196 410,255 498,255" fill="#18934D"/><polygon points="454,222 402,286 506,286" fill="#127E41"/>
+        <polygon points="454,150 459,165 475,166 462,175 467,190 454,181 441,190 446,175 433,166 449,165" fill="#FFC93C"/>
+        <circle cx="440" cy="232" r="5" fill="#FF5A3C"/><circle cx="470" cy="248" r="5" fill="#FFC93C"/><circle cx="450" cy="268" r="5" fill="#9B4DFF"/><circle cx="476" cy="270" r="5" fill="#1EA7F2"/>
+        <!-- presents -->
+        <rect x="34" y="258" width="54" height="42" rx="4" fill="#9B4DFF"/><rect x="56" y="258" width="10" height="42" fill="#FFC93C"/>
+        <rect x="76" y="276" width="40" height="30" rx="4" fill="#1EA7F2"/><rect x="92" y="276" width="9" height="30" fill="#fff"/>
+        <g fill="#fff"><circle cx="40" cy="120" r="3"/><circle cx="100" cy="170" r="3"/><circle cx="490" cy="110" r="3"/></g>
+      </svg>
+    </div>
+
+    <div class="part-grid" id="part-grid"></div>
+  </section>
+
+  <section id="screen-practice" class="screen">
+    <div class="topbar">
+      <button class="back-btn" id="back-btn">&larr; Home</button>
+      <div class="title-wrap">
+        <div class="part-title" id="part-title">Part 1</div>
+        <div class="step-dots" id="step-dots"></div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+    <div class="step-label" id="step-label">Step 1</div>
+    <div class="play-row"><button class="play-btn" id="play-btn"></button></div>
+    <div class="stage-box">
+      <div id="stage-scale">
+        <div id="stage">
+          <div id="keys"></div>
+          <svg id="hands" viewBox="0 0 900 330" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-row">
+      <div class="practice-text">Play this on the piano 10 times.</div>
+      <button class="next-btn" id="next-btn">Next step</button>
+    </div>
+    <div class="sound-note" id="sound-note"></div>
+  </section>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ================= Music data =================
+  // [note, seconds, finger]; entries in a hand play one after another from t = 0.
+  // [null, seconds] is a rest.
+  var A4x4 = [['A4',.5,5],['A4',.5,5],['A4',.5,5],['A4',.5,5]];
+  var P1 = [['G4',1.5,5],['F4',.5,4],['E4',1,3],['D4',1,2],['C4',1,1]];
+  var P4 = [['D4',1.5,2],['E4',.5,3],['F4',1,4],['D4',1,2]];
+  var P7 = A4x4.concat([['G4',1.5,4],['F4',.5,3],['E4',1,2],['D4',1,1]]);
+  var PARTS = {
+    1: { title:'Part 1', steps: [
+      { rh: P1, lh: [['C3',5,5]] },
+      { rh: P1.concat([['D4',1,2],['E4',1,3],['C4',1,1]]), lh: [['C3',8,5]] }
+    ]},
+    2: { title:'Part 2', steps: [
+      { rh: [['D4',.5,2],['E4',.5,3],['F4',.5,4],['D4',.5,2],['E4',1.5,3]], lh: [['G3',3.5,1]] }
+    ]},
+    3: { title:'Part 3', steps: [
+      { rh: [['D4',.5,2],['C4',1,1],['B3',1,2],['C4',2,1]], lh: [[null,2.5],['C3',2,5]] }
+    ]},
+    4: { title:'Part 4', steps: [
+      { rh: P4, lh: [['G3',4,1]] },
+      { rh: P4.concat([['E4',1.5,3]]), lh: [['G3',4,1],['G3',1.5,1]] },
+      { rh: P4.concat([['E4',1.5,3],['F4',.5,4],['G4',1,5],['D4',1,2]]), lh: [['G3',4,1],['G3',4,1]] }
+    ]},
+    5: { title:'Part 5', steps: [
+      { rh: [['E4',.5,3],['F4',.5,1],['G4',1,2]], lh: [['C3',2,5]] },
+      { rh: [['E4',.5,3],['F4',.5,1],['G4',1,2],['A4',1,3]], lh: [['C3',2,5],['D3',1,4]] },
+      { rh: [['E4',.5,3],['F4',.5,1],['G4',1,2],['A4',.5,3],['B4',.5,4],['C5',1,5]], lh: [['C3',2,5],['D3',2,4]] }
+    ]},
+    6: { title:'Part 6', steps: [
+      { rh: [['B4',1,3],['A4',1,2],['G4',2,1]], lh: [['G3',1,1],['D3',1,4],['G3',2,1]] }
+    ]},
+    7: { title:'Part 7', steps: [
+      { rh: A4x4, lh: [['F3',2,2]] },
+      { rh: A4x4.concat([['G4',1.5,4]]), lh: [['F3',2,2],['G3',1.5,1]] },
+      { rh: P7, lh: [['F3',2,2],['G3',4,1]] },
+      { rh: P7.concat([['C4',3,2]]), lh: [['F3',2,2],['G3',4,1],['C3',3,5]] }
+    ]}
+  };
+
+  // ================= Keyboard (C3 - C5, white and black keys) =================
+  var NOTE_LETTERS = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  function noteChromaticIndex(name){
+    var m = name.match(/^([A-G]#?)(\d)$/);
+    return parseInt(m[2], 10) * 12 + NOTE_LETTERS.indexOf(m[1]);
+  }
+  function buildChromaticRange(startNote, endNote){
+    var s = noteChromaticIndex(startNote), e = noteChromaticIndex(endNote), keys = [];
+    for(var i = s; i <= e; i++){
+      var letter = NOTE_LETTERS[i % 12];
+      keys.push({ name: letter + Math.floor(i / 12), type: letter.indexOf('#') >= 0 ? 'black' : 'white' });
+    }
+    return keys;
+  }
+  var WHITE_W = 58, WHITE_SPACING = 60, BLACK_W = 36, BLACK_OFFSET = 42, STAGE_W = 900;
+  function buildKeyboardLayout(chromatic){
+    var whiteX = 0, lastWhiteX = 0;
+    return chromatic.map(function(k){
+      if(k.type === 'white'){
+        var pos = whiteX; lastWhiteX = whiteX; whiteX += WHITE_SPACING;
+        return { name:k.name, type:k.type, pos:pos, center:pos + WHITE_W/2 };
+      }
+      return { name:k.name, type:k.type, pos: lastWhiteX + BLACK_OFFSET, center: lastWhiteX + BLACK_OFFSET + BLACK_W/2 };
+    });
+  }
+  var LAYOUT = buildKeyboardLayout(buildChromaticRange('C3','C5'));   // 15 white keys = 900px
+  var KEY_POS = {};
+  LAYOUT.forEach(function(k){ KEY_POS[k.name] = k; });
+
+  var keyEls = {};
+  function renderKeyboard(){
+    var wrap = document.getElementById('keys');
+    wrap.innerHTML = '';
+    var whites = LAYOUT.filter(function(k){ return k.type === 'white'; });
+    var blacks = LAYOUT.filter(function(k){ return k.type === 'black'; });
+    whites.concat(blacks).forEach(function(k){
+      var el = document.createElement('div');
+      el.className = 'pkey ' + k.type;
+      el.style.left = k.pos + 'px';
+      if(k.name === 'C4'){
+        var l = document.createElement('div'); l.className = 'klabel'; l.textContent = 'MC'; el.appendChild(l);
+      }
+      keyEls[k.name] = el;
+      wrap.appendChild(el);
+    });
+  }
+
+  // ================= Hands (drawn per step so each finger sits on its own key) =================
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var FINGER_W = 36, OUTLINE = 4;
+  var TIP_Y = [92,46,28,48,162];
+  var BASE_OFF = [[30,80],[16,110],[4,122],[-12,108],[-62,70]];
+  var LIT_OFF  = [[30,80],[16,110],[4,122],[-12,108],[-36,38]];
+  var fingerEls = {};
+
+  function svgEl(tag, attrs){
+    var el = document.createElementNS(SVGNS, tag);
+    Object.keys(attrs).forEach(function(k){ el.setAttribute(k, attrs[k]); });
+    return el;
+  }
+
+  function drawHand(svg, side, seq, label){
+    var s = side === 'L' ? 1 : -1;
+    var known = {}, u = [], i;
+    seq.forEach(function(e){
+      if(!e[0]) return;
+      var idx = 5 - e[2];
+      if(known[idx] === undefined) known[idx] = s * KEY_POS[e[0]].center;
+    });
+    var ks = Object.keys(known).map(Number).sort(function(a,b){ return a-b; });
+    for(i = 0; i < 5; i++){
+      if(known[i] !== undefined){ u[i] = known[i]; continue; }
+      var lo = null, hi = null;
+      ks.forEach(function(k){ if(k < i) lo = k; if(k > i && hi === null) hi = k; });
+      if(lo !== null && hi !== null) u[i] = known[lo] + (known[hi] - known[lo]) * (i - lo) / (hi - lo);
+      else if(lo !== null) u[i] = known[lo] + WHITE_SPACING * (i - lo);
+      else u[i] = known[hi] - WHITE_SPACING * (hi - i);
+    }
+    var b = u.map(function(x, j){ return [x + BASE_OFF[j][0], TIP_Y[j] + BASE_OFF[j][1]]; });
+    var palm = 'M' + (b[0][0]-20) + ' 166 L' + (b[3][0]+18) + ' 150 L' + (b[4][0]+36) + ' 218' +
+      ' C' + (b[4][0]+28) + ' 262 ' + (b[4][0]+8) + ' 288 ' + (b[4][0]-14) + ' 304' +
+      ' L' + (b[0][0]+46) + ' 304 C' + b[0][0] + ' 282 ' + (b[0][0]-26) + ' 220 ' + (b[0][0]-20) + ' 166 Z';
+
+    var g = svgEl('g', { transform: s === 1 ? '' : 'scale(-1,1)' });
+    g.appendChild(svgEl('path', { 'class':'hand-outline', d:palm, 'stroke-width':OUTLINE * 2, fill:'#2B2250' }));
+    for(i = 0; i < 5; i++)
+      g.appendChild(svgEl('line', { 'class':'hand-outline', x1:b[i][0], y1:b[i][1], x2:u[i], y2:TIP_Y[i], 'stroke-width':FINGER_W + OUTLINE * 2 }));
+    g.appendChild(svgEl('path', { 'class':'hand-skin', d:palm, fill:'#FFD9B3', 'stroke-width':0 }));
+    for(i = 0; i < 5; i++)
+      g.appendChild(svgEl('line', { 'class':'hand-skin', x1:b[i][0], y1:b[i][1], x2:u[i], y2:TIP_Y[i], 'stroke-width':FINGER_W }));
+
+    seq.forEach(function(e){
+      if(!e[0] || fingerEls[e[0]]) return;
+      var j = 5 - e[2], tx = s * KEY_POS[e[0]].center;
+      var fg = svgEl('g', { 'class':'finger' });
+      fg.appendChild(svgEl('line', { x1:tx + LIT_OFF[j][0], y1:TIP_Y[j] + LIT_OFF[j][1], x2:tx, y2:TIP_Y[j] }));
+      fg.appendChild(svgEl('circle', { cx:tx, cy:TIP_Y[j], r:FINGER_W / 2 }));
+      g.appendChild(fg);
+      fingerEls[e[0]] = fg;
+    });
+    svg.appendChild(g);
+
+    var t = svgEl('text', { 'class':'hand-tag', x:s * (u[0] + 100), y:262 });
+    t.textContent = label;
+    svg.appendChild(t);
+  }
+
+  function renderHands(step){
+    var svg = document.getElementById('hands');
+    svg.innerHTML = '';
+    fingerEls = {};
+    drawHand(svg, 'L', step.lh, 'Left hand');
+    drawHand(svg, 'R', step.rh, 'Right hand');
+  }
+
+  // ================= Sound: physical-instruments.js piano (jsDelivr), with a simple fallback =================
+  var LIB_URL = 'https://cdn.jsdelivr.net/npm/physical-instruments.js@0.1.1/dist/index.js';
+  var engine = null, track = null, fallbackCtx = null, enginePromise = null, usingFallback = false;
+
+  function noteToMidi(name){
+    var m = name.match(/^([A-G]#?)(\d)$/);
+    return (parseInt(m[2], 10) + 1) * 12 + NOTE_LETTERS.indexOf(m[1]);
+  }
+  function loadEngine(){
+    if(enginePromise) return enginePromise;
+    enginePromise = (async function(){
+      try{
+        var mod = await import(LIB_URL);
+        engine = await mod.createEngine();
+        await engine.ready;
+        track = engine.createTrack('piano', { gain: 1 });
+      }catch(err){
+        console.warn('physical-instruments.js could not load, using a simple built-in piano-ish sound instead.', err);
+        usingFallback = true;
+        fallbackCtx = new (window.AudioContext || window.webkitAudioContext)();
+        document.getElementById('sound-note').textContent =
+          'Could not load the piano library (are you online?). Using a simple backup sound instead.';
+      }
+    })();
+    return enginePromise;
+  }
+
+  var fallbackVoices = {};
+  function soundOn(note){
+    var midi = noteToMidi(note);
+    if(!usingFallback){ if(track) track.noteOn(midi, 100); return; }
+    if(fallbackCtx.state === 'suspended') fallbackCtx.resume();
+    var osc = fallbackCtx.createOscillator(), gain = fallbackCtx.createGain();
+    var now = fallbackCtx.currentTime;
+    osc.type = 'triangle';
+    osc.frequency.value = 440 * Math.pow(2, (midi - 69) / 12);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.35, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.08, now + 1.2);
+    osc.connect(gain); gain.connect(fallbackCtx.destination);
+    osc.start();
+    (fallbackVoices[note] = fallbackVoices[note] || []).push({ osc:osc, gain:gain });
+  }
+  function soundOff(note){
+    var midi = noteToMidi(note);
+    if(!usingFallback){ if(track) track.noteOff(midi); return; }
+    var list = fallbackVoices[note];
+    if(!list || !list.length) return;
+    var v = list.shift();
+    var now = fallbackCtx.currentTime;
+    v.gain.gain.cancelScheduledValues(now);
+    v.gain.gain.setValueAtTime(Math.max(v.gain.gain.value, 0.0001), now);
+    v.gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+    v.osc.stop(now + 0.2);
+  }
+
+  // ================= Playback + lights =================
+  var player = { playing:false, timers:[], token:0, sounding:[] };
+  var GAP = 0.06;
+
+  function lightOn(note, hand){
+    var k = keyEls[note], f = fingerEls[note];
+    if(k) k.classList.add('lit-' + hand);
+    if(f) f.classList.add('lit-' + hand);
+  }
+  function lightOff(note){
+    var k = keyEls[note], f = fingerEls[note];
+    if(k) k.classList.remove('lit-L','lit-R');
+    if(f) f.classList.remove('lit-L','lit-R');
+  }
+
+  function buildEvents(step){
+    var events = [], total = 0;
+    [['L', step.lh], ['R', step.rh]].forEach(function(pair){
+      var t = 0;
+      pair[1].forEach(function(n){
+        if(n[0]) events.push({ hand:pair[0], note:n[0], start:t, end:t + n[1] });
+        t += n[1];
+      });
+      if(t > total) total = t;
+    });
+    return { events:events, total:total };
+  }
+
+  function setPlayButton(mode){
+    var b = document.getElementById('play-btn');
+    var playIcon = '<svg class="icon" viewBox="0 0 24 24"><path d="M6 3 L21 12 L6 21Z" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>';
+    var stopIcon = '<svg class="icon" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3" fill="#fff"/></svg>';
+    b.disabled = (mode === 'loading');
+    b.classList.toggle('stop', mode === 'stop');
+    if(mode === 'play') b.innerHTML = playIcon + '<span>Play</span>';
+    else if(mode === 'stop') b.innerHTML = stopIcon + '<span>Stop</span>';
+    else b.innerHTML = '<span>Loading piano…</span>';
+  }
+
+  function stopPlayback(){
+    player.token++;
+    player.timers.forEach(clearTimeout);
+    player.timers = [];
+    player.sounding.forEach(function(note){ soundOff(note); lightOff(note); });
+    player.sounding = [];
+    Object.keys(keyEls).forEach(lightOff);
+    Object.keys(fingerEls).forEach(lightOff);
+    player.playing = false;
+    setPlayButton('play');
+  }
+
+  async function startPlayback(){
+    var myToken = ++player.token;
+    setPlayButton('loading');
+    await loadEngine();
+    if(myToken !== player.token) return;
+
+    var step = PARTS[current.part].steps[current.step];
+    var built = buildEvents(step);
+    player.playing = true;
+    player.sounding = [];
+    setPlayButton('stop');
+
+    built.events.forEach(function(ev){
+      var onT = setTimeout(function(){
+        lightOn(ev.note, ev.hand);
+        soundOn(ev.note);
+        player.sounding.push(ev.note);
+      }, ev.start * 1000);
+      var offT = setTimeout(function(){
+        soundOff(ev.note);
+        lightOff(ev.note);
+        var i = player.sounding.indexOf(ev.note);
+        if(i >= 0) player.sounding.splice(i, 1);
+      }, (ev.end - GAP) * 1000);
+      player.timers.push(onT, offT);
+    });
+    player.timers.push(setTimeout(function(){
+      if(myToken !== player.token) return;
+      stopPlayback();
+    }, built.total * 1000 + 80));
+  }
+
+  // ================= Screens + step navigation =================
+  var current = { part:1, step:0 };
+
+  function showScreen(id){
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
+    if(id === 'screen-practice'){ fitStage(); requestAnimationFrame(fitStage); }
+  }
+
+  function renderStep(){
+    var part = PARTS[current.part];
+    var total = part.steps.length;
+    document.getElementById('part-title').textContent = part.title;
+    document.getElementById('step-label').textContent = 'Step ' + (current.step + 1) + ' of ' + total;
+
+    var dots = document.getElementById('step-dots');
+    dots.innerHTML = '';
+    for(var i = 0; i < total; i++){
+      var d = document.createElement('div');
+      d.className = 'dot' + (i < current.step ? ' done' : (i === current.step ? ' now' : ''));
+      dots.appendChild(d);
+    }
+
+    var next = document.getElementById('next-btn');
+    var last = current.step === total - 1;
+    next.textContent = last ? 'Done practicing this part!' : 'Next step';
+    next.classList.toggle('done', last);
+
+    renderHands(part.steps[current.step]);
+    setPlayButton('play');
+    fitStage();
+  }
+
+  function startPart(n){
+    stopPlayback();
+    current.part = n;
+    current.step = 0;
+    showScreen('screen-practice');
+    renderStep();
+  }
+  function goHome(){ stopPlayback(); showScreen('screen-home'); }
+
+  function fitStage(){
+    var scaleBox = document.getElementById('stage-scale');
+    var stage = document.getElementById('stage');
+    if(!scaleBox.clientWidth || !scaleBox.clientHeight) return;
+    stage.style.transform = 'none';
+    var naturalH = stage.offsetHeight || 536;
+    var scale = Math.min(1, scaleBox.clientWidth / STAGE_W, scaleBox.clientHeight / naturalH);
+    stage.style.transformOrigin = 'top center';
+    stage.style.transform = 'scale(' + scale + ')';
+    stage.style.top = Math.max(0, (scaleBox.clientHeight - naturalH * scale) / 2) + 'px';
+  }
+
+  // ================= Wiring =================
+  var grid = document.getElementById('part-grid');
+  var partCount = Object.keys(PARTS).length;
+  for(var n = 1; n <= partCount; n++){
+    (function(n){
+      var b = document.createElement('button');
+      b.className = 'part-btn c' + ((n - 1) % 4) + (n === partCount && partCount % 2 === 1 ? ' last-odd' : '');
+      b.textContent = 'Part ' + n;
+      b.addEventListener('click', function(){ startPart(n); });
+      grid.appendChild(b);
+    })(n);
+  }
+  document.getElementById('back-btn').addEventListener('click', goHome);
+  document.getElementById('play-btn').addEventListener('click', function(){
+    if(player.playing) stopPlayback(); else startPlayback();
+  });
+  document.getElementById('next-btn').addEventListener('click', function(){
+    var total = PARTS[current.part].steps.length;
+    if(current.step >= total - 1){ goHome(); return; }
+    stopPlayback();
+    current.step++;
+    renderStep();
+  });
+  window.addEventListener('resize', fitStage);
+
+  renderKeyboard();
+  setPlayButton('play');
+})();
+</script>
+</body>
+</html>
